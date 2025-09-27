@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Crypto Casino</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         /* ПОЛНЫЕ СТИЛИ */
         * {
@@ -636,6 +637,7 @@
                 };
                 
                 this.init();
+                this.syncWithBot();
             }
 
             initTelegram() {
@@ -780,16 +782,20 @@
                             document.getElementById(slotId).textContent = results[index];
                         });
 
+                        let winAmount = 0;
                         if (results[0] === results[1] && results[1] === results[2]) {
-                            const winAmount = bet * 10;
+                            winAmount = bet * 10;
                             this.userData.balance += winAmount;
                             this.showResult('slotsResult', `ДЖЕКПОТ! Вы выиграли ${winAmount} USD!`, 'win');
+                            this.sendGameResult('slots', true, winAmount);
                         } else if (results[0] === results[1] || results[1] === results[2]) {
-                            const winAmount = bet * 2;
+                            winAmount = bet * 2;
                             this.userData.balance += winAmount;
                             this.showResult('slotsResult', `Вы выиграли ${winAmount} USD!`, 'win');
+                            this.sendGameResult('slots', true, winAmount);
                         } else {
                             this.showResult('slotsResult', 'Повезет в следующий раз!', 'lose');
+                            this.sendGameResult('slots', false, bet);
                         }
                         this.updateBalanceDisplay();
                     }
@@ -910,8 +916,10 @@
                         const winAmount = bet * multiplier;
                         this.userData.balance += winAmount;
                         this.showResult('rouletteResult', `Выигрыш! Выпало ${winningNumber} (${winningType}). Вы выиграли ${winAmount} USD!`, 'win');
+                        this.sendGameResult('roulette', true, winAmount);
                     } else {
                         this.showResult('rouletteResult', `Проигрыш! Выпало ${winningNumber} (${winningType})`, 'lose');
+                        this.sendGameResult('roulette', false, bet);
                     }
                     
                     this.updateBalanceDisplay();
@@ -1106,25 +1114,42 @@
                 const bet = this.userData.bets.blackjack;
                 
                 let resultMessage = message;
+                let won = false;
+                let amount = 0;
                 
                 if (!resultMessage) {
                     if (dealerValue > 21) {
                         resultMessage = 'Дилер перебрал! Вы выиграли!';
-                        this.userData.balance += bet * 2;
+                        amount = bet * 2;
+                        this.userData.balance += amount;
+                        won = true;
                     } else if (playerValue > dealerValue) {
                         resultMessage = 'Вы выиграли!';
-                        this.userData.balance += bet * 2;
+                        amount = bet * 2;
+                        this.userData.balance += amount;
+                        won = true;
                     } else if (playerValue === dealerValue) {
                         resultMessage = 'Ничья! Ставка возвращена.';
-                        this.userData.balance += bet;
+                        amount = bet;
+                        this.userData.balance += amount;
                     } else {
                         resultMessage = 'Дилер выиграл!';
+                        amount = bet;
                     }
+                } else {
+                    amount = bet;
                 }
 
-                this.showResult('blackjackResult', resultMessage, resultMessage.includes('выиграл') ? 'win' : 'lose');
+                this.showResult('blackjackResult', resultMessage, resultMessage.includes('выиграл') || resultMessage.includes('Ничья') ? 'win' : 'lose');
                 this.updateBalanceDisplay();
                 this.blackjackData.gameState = 'game-over';
+                
+                // Отправляем результат в бот
+                if (resultMessage.includes('Ничья')) {
+                    this.sendGameResult('blackjack', 'draw', amount);
+                } else {
+                    this.sendGameResult('blackjack', won, won ? amount : -amount);
+                }
                 
                 const controls = document.getElementById('blackjackControls');
                 controls.innerHTML = `<button class="spin-btn" onclick="casino.initBlackjack(); casino.getBlackjackHTML(); casino.startBlackjack()">Новая игра</button>`;
@@ -1242,6 +1267,7 @@
             pokerFold() {
                 this.pokerData.gameState = 'game-over';
                 this.showResult('pokerResult', 'Вы сбросили карты. Ставка потеряна.', 'lose');
+                this.sendGameResult('poker', false, this.userData.bets.poker);
             }
 
             determinePokerWinner() {
@@ -1249,16 +1275,23 @@
                 const handStrength = Math.floor(Math.random() * 10) + 1;
                 
                 if (handStrength >= 8) {
-                    this.userData.balance += bet * 10;
-                    this.showResult('pokerResult', `Флеш-рояль! Вы выиграли ${bet * 10} USD!`, 'win');
+                    const winAmount = bet * 10;
+                    this.userData.balance += winAmount;
+                    this.showResult('pokerResult', `Флеш-рояль! Вы выиграли ${winAmount} USD!`, 'win');
+                    this.sendGameResult('poker', true, winAmount);
                 } else if (handStrength >= 6) {
-                    this.userData.balance += bet * 5;
-                    this.showResult('pokerResult', `Стрит! Вы выиграли ${bet * 5} USD!`, 'win');
+                    const winAmount = bet * 5;
+                    this.userData.balance += winAmount;
+                    this.showResult('pokerResult', `Стрит! Вы выиграли ${winAmount} USD!`, 'win');
+                    this.sendGameResult('poker', true, winAmount);
                 } else if (handStrength >= 4) {
-                    this.userData.balance += bet * 2;
-                    this.showResult('pokerResult', `Две пары! Вы выиграли ${bet * 2} USD!`, 'win');
+                    const winAmount = bet * 2;
+                    this.userData.balance += winAmount;
+                    this.showResult('pokerResult', `Две пары! Вы выиграли ${winAmount} USD!`, 'win');
+                    this.sendGameResult('poker', true, winAmount);
                 } else {
                     this.showResult('pokerResult', 'Комбинация слишком слабая. Вы проиграли.', 'lose');
+                    this.sendGameResult('poker', false, bet);
                 }
                 
                 this.updateBalanceDisplay();
@@ -1266,6 +1299,73 @@
                 
                 const controls = document.getElementById('pokerControls');
                 controls.innerHTML = `<button class="spin-btn" onclick="casino.initPoker(); casino.startPoker()">Новая игра</button>`;
+            }
+
+            // ИНТЕГРАЦИЯ С TELEGRAM БОТОМ
+            sendGameResultToBot(gameData) {
+                if (window.Telegram && window.Telegram.WebApp) {
+                    const resultData = {
+                        game_type: gameData.game,
+                        amount: gameData.amount,
+                        result: gameData.result,
+                        balance: gameData.balance,
+                        timestamp: new Date().toISOString()
+                    };
+                    
+                    // Отправляем данные боту
+                    Telegram.WebApp.sendData(JSON.stringify(resultData));
+                    
+                    // Показываем уведомление пользователю
+                    Telegram.WebApp.showPopup({
+                        title: "Результат сохранен",
+                        message: `Баланс обновлен: ${gameData.balance} USD`,
+                        buttons: [{ type: "ok" }]
+                    });
+                }
+            }
+
+            // Модифицируем функцию отправки результатов в существующих играх
+            sendGameResult(game, result, amount) {
+                const gameData = {
+                    game: game,
+                    result: result,
+                    amount: amount,
+                    balance: this.userData.balance,
+                    timestamp: Date.now()
+                };
+                
+                // Отправляем в бот
+                this.sendGameResultToBot(gameData);
+                
+                // Сохраняем в локальное хранилище (бэкап)
+                this.saveGameResult(gameData);
+            }
+
+            // Функция для сохранения результатов в localStorage
+            saveGameResult(gameData) {
+                let history = JSON.parse(localStorage.getItem('gameHistory') || '[]');
+                history.push(gameData);
+                if (history.length > 50) history = history.slice(-50);
+                localStorage.setItem('gameHistory', JSON.stringify(history));
+            }
+
+            // Функция для синхронизации с ботом при загрузке
+            syncWithBot() {
+                if (window.Telegram && window.Telegram.WebApp) {
+                    // Получаем историю игр из localStorage
+                    const history = JSON.parse(localStorage.getItem('gameHistory') || '[]');
+                    
+                    // Отправляем несинхронизированные игры
+                    history.forEach(game => {
+                        if (!game.synced) {
+                            this.sendGameResultToBot(game);
+                            game.synced = true;
+                        }
+                    });
+                    
+                    // Сохраняем обновленную историю
+                    localStorage.setItem('gameHistory', JSON.stringify(history));
+                }
             }
         }
 
