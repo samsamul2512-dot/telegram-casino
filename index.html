@@ -14,10 +14,15 @@
     .modal-content{background:#1a1f3b;margin:5% auto;padding:20px;border-radius:12px;max-width:500px;position:relative;color:#fff;}
     .close{position:absolute;top:10px;right:15px;cursor:pointer;font-size:20px;}
     button{padding:10px 20px;margin:5px;border:none;border-radius:8px;cursor:pointer;}
-    .roulette-wheel{width:300px;height:300px;border-radius:50%;border:8px solid gold;position:relative;overflow:hidden;transition:transform 4s cubic-bezier(0.1,0.8,0.2,1);}
-    .roulette-arrow{width:0;height:0;border-left:15px solid transparent;border-right:15px solid transparent;border-bottom:25px solid red;position:absolute;top:-30px;left:50%;transform:translateX(-50%);}
-    .sector{position:absolute;width:50%;height:50%;transform-origin:100% 100%;display:flex;align-items:center;justify-content:center;font-size:10px;}
+    .roulette-container{position:relative;text-align:center;margin:20px 0;}
+    .roulette-wheel{width:300px;height:300px;border-radius:50%;border:8px solid gold;position:relative;overflow:hidden;transition:transform 4s cubic-bezier(0.1,0.8,0.2,1);margin:0 auto;}
+    .roulette-arrow{width:0;height:0;border-left:15px solid transparent;border-right:15px solid transparent;border-bottom:25px solid red;position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:10;}
+    .sector{position:absolute;width:50%;height:50%;transform-origin:100% 100%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:bold;}
     .blackjack-hand{margin:10px 0;}
+    .bet-controls{margin:15px 0;}
+    .bet-btn{padding:5px 10px;margin:2px;}
+    .cards{display:flex;gap:5px;margin:10px 0;}
+    .card{width:40px;height:60px;background:#fff;border-radius:5px;color:#000;display:flex;align-items:center;justify-content:center;font-weight:bold;}
   </style>
 </head>
 <body>
@@ -37,7 +42,8 @@
       <span class="close" onclick="closeModal('slots')">&times;</span>
       <h2>🎰 Слоты</h2>
       <p>Баланс: <span id="slotsBalance"></span></p>
-      <button onclick="playSlots()">Крутить</button>
+      <div style="font-size:40px;margin:20px 0;" id="slotsDisplay">❓ ❓ ❓</div>
+      <button onclick="playSlots()">Крутить (10💰)</button>
       <p id="slotsResult"></p>
     </div>
   </div>
@@ -48,11 +54,23 @@
       <span class="close" onclick="closeModal('roulette')">&times;</span>
       <h2>🎯 Рулетка</h2>
       <p>Баланс: <span id="rouletteBalance"></span></p>
-      <div class="roulette-container" style="position:relative;text-align:center;">
+      
+      <div class="roulette-container">
         <div class="roulette-arrow"></div>
         <div id="wheel" class="roulette-wheel"></div>
       </div>
-      <button onclick="spinRoulette()">Крутить рулетку</button>
+      
+      <div class="bet-controls">
+        <button class="bet-btn" onclick="placeBet('red')">Красное (x2)</button>
+        <button class="bet-btn" onclick="placeBet('black')">Черное (x2)</button>
+        <button class="bet-btn" onclick="placeBet('even')">Четное (x2)</button>
+        <button class="bet-btn" onclick="placeBet('odd')">Нечетное (x2)</button>
+        <button class="bet-btn" onclick="placeBet('1-18')">1-18 (x2)</button>
+        <button class="bet-btn" onclick="placeBet('19-36')">19-36 (x2)</button>
+      </div>
+      
+      <p>Ставка: <span id="currentBet">0</span> 💰</p>
+      <button onclick="spinRoulette()" id="spinBtn">Крутить рулетку</button>
       <p id="rouletteResult"></p>
     </div>
   </div>
@@ -63,80 +81,402 @@
       <span class="close" onclick="closeModal('blackjack')">&times;</span>
       <h2>🃏 Блэкджек</h2>
       <p>Баланс: <span id="blackjackBalance"></span></p>
-      <div id="bjPlayer" class="blackjack-hand"></div>
-      <div id="bjDealer" class="blackjack-hand"></div>
-      <button onclick="hit()">Взять карту</button>
-      <button onclick="stand()">Хватит</button>
+      
+      <div class="bet-controls">
+        <button class="bet-btn" onclick="changeBet(-10)">-10</button>
+        <button class="bet-btn" onclick="changeBet(-5)">-5</button>
+        <span>Ставка: <span id="bjBet">10</span> 💰</span>
+        <button class="bet-btn" onclick="changeBet(5)">+5</button>
+        <button class="bet-btn" onclick="changeBet(10)">+10</button>
+      </div>
+      
+      <div id="bjDealer">
+        <h3>Дилер: <span id="dealerScore">?</span></h3>
+        <div class="cards" id="dealerCards"></div>
+      </div>
+      
+      <div id="bjPlayer">
+        <h3>Игрок: <span id="playerScore">0</span></h3>
+        <div class="cards" id="playerCards"></div>
+      </div>
+      
+      <div id="bjControls">
+        <button onclick="startBlackjack()" id="startBtn">Начать игру</button>
+        <button onclick="hit()" id="hitBtn" disabled>Взять карту</button>
+        <button onclick="stand()" id="standBtn" disabled>Хватит</button>
+      </div>
+      
       <p id="bjResult"></p>
     </div>
   </div>
 
 <script>
-let balance=1000;
+let balance = 1000;
+let currentRouletteBet = {type: null, amount: 0};
+let blackjackBet = 10;
+let blackjackGameActive = false;
+
 function updateBalances(){
-  document.getElementById("balance").innerText=balance;
-  document.getElementById("slotsBalance").innerText=balance;
-  document.getElementById("rouletteBalance").innerText=balance;
-  document.getElementById("blackjackBalance").innerText=balance;
+  document.getElementById("balance").innerText = balance;
+  document.getElementById("slotsBalance").innerText = balance;
+  document.getElementById("rouletteBalance").innerText = balance;
+  document.getElementById("blackjackBalance").innerText = balance;
 }
 updateBalances();
 
-function openModal(id){document.getElementById(id).style.display="block";updateBalances();}
-function closeModal(id){document.getElementById(id).style.display="none";}
+function openModal(id){
+  document.getElementById(id).style.display = "block";
+  updateBalances();
+  
+  if (id === 'roulette') {
+    initRoulette();
+  }
+}
+
+function closeModal(id){
+  document.getElementById(id).style.display = "none";
+  
+  if (id === 'blackjack' && blackjackGameActive) {
+    endBlackjack("Игра прервана");
+  }
+}
 
 // Slots
 function playSlots(){
-  const symbols=["🍒","🍋","🔔","⭐","7️⃣"];
-  let result=[symbols[Math.floor(Math.random()*symbols.length)],symbols[Math.floor(Math.random()*symbols.length)],symbols[Math.floor(Math.random()*symbols.length)]];
-  document.getElementById("slotsResult").innerText=result.join(" ");
-  if(result[0]===result[1]&&result[1]===result[2]){balance+=100;document.getElementById("slotsResult").innerText+=" 🎉 Выигрыш +100";}
-  else{balance-=10;document.getElementById("slotsResult").innerText+=" ❌ -10";}
+  if (balance < 10) {
+    document.getElementById("slotsResult").innerText = "❌ Недостаточно средств!";
+    return;
+  }
+  
+  balance -= 10;
+  updateBalances();
+  
+  const symbols = ["🍒", "🍋", "🔔", "⭐", "7️⃣", "💎"];
+  let result = [
+    symbols[Math.floor(Math.random() * symbols.length)],
+    symbols[Math.floor(Math.random() * symbols.length)],
+    symbols[Math.floor(Math.random() * symbols.length)]
+  ];
+  
+  document.getElementById("slotsDisplay").innerText = result.join(" ");
+  
+  if (result[0] === result[1] && result[1] === result[2]) {
+    let winAmount = 0;
+    if (result[0] === "7️⃣") {
+      winAmount = 500;
+      document.getElementById("slotsResult").innerText = "🎉 ДЖЕКПОТ! +500💰";
+    } else {
+      winAmount = 100;
+      document.getElementById("slotsResult").innerText = "🎉 Выигрыш +100💰";
+    }
+    balance += winAmount;
+  } else if (result[0] === result[1] || result[1] === result[2] || result[0] === result[2]) {
+    balance += 20;
+    document.getElementById("slotsResult").innerText = "👍 Неплохо! +20💰";
+  } else {
+    document.getElementById("slotsResult").innerText = "❌ Попробуйте еще раз!";
+  }
+  
   updateBalances();
 }
 
 // Roulette
-const wheel=document.getElementById("wheel");
-let rouletteNumbers=[0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26];
-let anglePerSector=360/rouletteNumbers.length;
-rouletteNumbers.forEach((num,i)=>{
-  let sector=document.createElement("div");
-  sector.className="sector";
-  sector.style.transform=`rotate(${i*anglePerSector}deg) skewY(${90-anglePerSector}deg)`;
-  sector.innerText=num;
-  sector.style.background=(i%2==0)?"black":"red";
-  sector.style.color="white";
-  wheel.appendChild(sector);
-});
+const rouletteNumbers = [
+  0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26
+];
 
-function spinRoulette(){
-  let spins=5+Math.random()*5;
-  let finalAngle=spins*360;
-  wheel.style.transform=`rotate(${finalAngle}deg)`;
-  setTimeout(()=>{
-    let actualAngle=finalAngle%360;
-    let index=Math.floor((rouletteNumbers.length - actualAngle/anglePerSector))%rouletteNumbers.length;
-    let winNum=rouletteNumbers[index];
-    document.getElementById("rouletteResult").innerText="Выпало число: "+winNum;
-    balance+=Math.random()>0.5?100:-50;
+const redNumbers = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36];
+const blackNumbers = [2, 4, 6, 8, 10, 11, 13, 15, 17, 20, 22, 24, 26, 28, 29, 31, 33, 35];
+
+function initRoulette() {
+  const wheel = document.getElementById("wheel");
+  wheel.innerHTML = "";
+  wheel.style.transform = "rotate(0deg)";
+  
+  const anglePerSector = 360 / rouletteNumbers.length;
+  
+  rouletteNumbers.forEach((num, i) => {
+    let sector = document.createElement("div");
+    sector.className = "sector";
+    sector.style.transform = `rotate(${i * anglePerSector}deg) skewY(${90 - anglePerSector}deg)`;
+    sector.innerText = num;
+    
+    if (num === 0) {
+      sector.style.background = "green";
+    } else if (redNumbers.includes(num)) {
+      sector.style.background = "red";
+    } else {
+      sector.style.background = "black";
+    }
+    
+    sector.style.color = "white";
+    wheel.appendChild(sector);
+  });
+  
+  currentRouletteBet = {type: null, amount: 0};
+  document.getElementById("currentBet").innerText = "0";
+  document.getElementById("rouletteResult").innerText = "";
+  document.getElementById("spinBtn").disabled = false;
+}
+
+function placeBet(type) {
+  if (balance < 10) {
+    document.getElementById("rouletteResult").innerText = "❌ Недостаточно средств!";
+    return;
+  }
+  
+  if (currentRouletteBet.type === type) {
+    currentRouletteBet.amount += 10;
+  } else {
+    currentRouletteBet = {type: type, amount: 10};
+  }
+  
+  balance -= 10;
+  updateBalances();
+  document.getElementById("currentBet").innerText = currentRouletteBet.amount;
+  document.getElementById("rouletteResult").innerText = `Ставка на: ${getBetName(type)}`;
+}
+
+function getBetName(type) {
+  const names = {
+    'red': 'красное',
+    'black': 'черное',
+    'even': 'четное',
+    'odd': 'нечетное',
+    '1-18': '1-18',
+    '19-36': '19-36'
+  };
+  return names[type] || type;
+}
+
+function spinRoulette() {
+  if (currentRouletteBet.amount === 0) {
+    document.getElementById("rouletteResult").innerText = "❌ Сначала сделайте ставку!";
+    return;
+  }
+  
+  document.getElementById("spinBtn").disabled = true;
+  
+  const wheel = document.getElementById("wheel");
+  const spins = 5 + Math.random() * 5;
+  const finalAngle = spins * 360 + Math.floor(Math.random() * 360);
+  
+  wheel.style.transform = `rotate(${-finalAngle}deg)`;
+  
+  setTimeout(() => {
+    const normalizedAngle = (finalAngle % 360);
+    const index = Math.floor(normalizedAngle / (360 / rouletteNumbers.length)) % rouletteNumbers.length;
+    const winningNumber = rouletteNumbers[index];
+    
+    document.getElementById("rouletteResult").innerText = `Выпало число: ${winningNumber}`;
+    
+    // Проверка выигрыша
+    let won = false;
+    const betType = currentRouletteBet.type;
+    
+    if (betType === 'red' && redNumbers.includes(winningNumber)) won = true;
+    else if (betType === 'black' && blackNumbers.includes(winningNumber)) won = true;
+    else if (betType === 'even' && winningNumber !== 0 && winningNumber % 2 === 0) won = true;
+    else if (betType === 'odd' && winningNumber % 2 === 1) won = true;
+    else if (betType === '1-18' && winningNumber >= 1 && winningNumber <= 18) won = true;
+    else if (betType === '19-36' && winningNumber >= 19 && winningNumber <= 36) won = true;
+    
+    if (won) {
+      const winAmount = currentRouletteBet.amount * 2;
+      balance += winAmount;
+      document.getElementById("rouletteResult").innerText += ` 🎉 Выигрыш ${winAmount}💰`;
+    } else {
+      document.getElementById("rouletteResult").innerText += ` ❌ Проигрыш ${currentRouletteBet.amount}💰`;
+    }
+    
     updateBalances();
-  },4000);
+    currentRouletteBet = {type: null, amount: 0};
+    document.getElementById("currentBet").innerText = "0";
+    
+    setTimeout(() => {
+      document.getElementById("spinBtn").disabled = false;
+    }, 2000);
+  }, 4000);
 }
 
 // Blackjack
-let bjDeck,player,dealer,gameOver=false;
-function newDeck(){let d=[];let cards=[2,3,4,5,6,7,8,9,10,10,10,10,11];for(let i=0;i<4;i++){d=d.concat(cards);}return d;}
-function startBlackjack(){bjDeck=newDeck();player=[draw(),draw()];dealer=[draw(),draw()];gameOver=false;render();}
-function draw(){return bjDeck.splice(Math.floor(Math.random()*bjDeck.length),1)[0];}
-function sum(hand){return hand.reduce((a,b)=>a+b,0);}
-function render(){document.getElementById("bjPlayer").innerText="Твои карты: "+player.join(" ")+" ("+sum(player)+")";
-document.getElementById("bjDealer").innerText="Карты дилера: "+dealer[0]+" ?";
+function changeBet(amount) {
+  if (!blackjackGameActive) {
+    blackjackBet += amount;
+    if (blackjackBet < 5) blackjackBet = 5;
+    if (blackjackBet > balance) blackjackBet = Math.max(5, balance - (balance % 5));
+    document.getElementById("bjBet").innerText = blackjackBet;
+  }
 }
-function hit(){if(gameOver)return;player.push(draw());if(sum(player)>21){end("❌ Перебор!");}render();}
-function stand(){if(gameOver)return;while(sum(dealer)<17)dealer.push(draw());let ps=sum(player),ds=sum(dealer);let msg="";
-if(ds>21||ps>ds){msg="🎉 Победа! +100";balance+=100;}else if(ps<ds){msg="😢 Проигрыш -50";balance-=50;}else{msg="🤝 Ничья";}
-end(msg);}
-function end(msg){document.getElementById("bjDealer").innerText="Карты дилера: "+dealer.join(" ")+" ("+sum(dealer)+")";document.getElementById("bjResult").innerText=msg;gameOver=true;updateBalances();}
-document.getElementById("blackjack").addEventListener("click",()=>{if(!gameOver)startBlackjack();});
+
+function startBlackjack() {
+  if (blackjackGameActive) return;
+  
+  if (balance < blackjackBet) {
+    document.getElementById("bjResult").innerText = "❌ Недостаточно средств для ставки!";
+    return;
+  }
+  
+  balance -= blackjackBet;
+  updateBalances();
+  
+  blackjackGameActive = true;
+  document.getElementById("startBtn").disabled = true;
+  document.getElementById("hitBtn").disabled = false;
+  document.getElementById("standBtn").disabled = false;
+  document.getElementById("bjResult").innerText = "";
+  
+  // Создаем колоду и раздаем карты
+  const deck = createDeck();
+  playerHand = [drawCard(deck), drawCard(deck)];
+  dealerHand = [drawCard(deck), drawCard(deck)];
+  
+  updateBlackjackDisplay(deck);
+}
+
+function createDeck() {
+  const suits = ['♥', '♦', '♣', '♠'];
+  const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+  let deck = [];
+  
+  for (let suit of suits) {
+    for (let value of values) {
+      deck.push({suit, value});
+    }
+  }
+  
+  // Тасовка колоды
+  for (let i = deck.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [deck[i], deck[j]] = [deck[j], deck[i]];
+  }
+  
+  return deck;
+}
+
+function drawCard(deck) {
+  return deck.pop();
+}
+
+function getCardValue(card) {
+  if (['J', 'Q', 'K'].includes(card.value)) return 10;
+  if (card.value === 'A') return 11; // Упрощенная логика для туза
+  return parseInt(card.value);
+}
+
+function calculateScore(hand) {
+  let score = 0;
+  let aces = 0;
+  
+  for (let card of hand) {
+    if (card.value === 'A') aces++;
+    score += getCardValue(card);
+  }
+  
+  // Корректировка для тузов
+  while (score > 21 && aces > 0) {
+    score -= 10;
+    aces--;
+  }
+  
+  return score;
+}
+
+function updateBlackjackDisplay(deck) {
+  // Отображение карт игрока
+  const playerCardsElement = document.getElementById("playerCards");
+  playerCardsElement.innerHTML = "";
+  playerHand.forEach(card => {
+    const cardElement = document.createElement("div");
+    cardElement.className = "card";
+    cardElement.innerHTML = `${card.value}${card.suit}`;
+    cardElement.style.color = (card.suit === '♥' || card.suit === '♦') ? 'red' : 'black';
+    playerCardsElement.appendChild(cardElement);
+  });
+  
+  // Отображение карт дилера (первая карта скрыта)
+  const dealerCardsElement = document.getElementById("dealerCards");
+  dealerCardsElement.innerHTML = "";
+  dealerHand.forEach((card, index) => {
+    const cardElement = document.createElement("div");
+    cardElement.className = "card";
+    if (index === 0 && !blackjackGameEnded) {
+      cardElement.innerHTML = "?";
+      cardElement.style.background = "#333";
+      cardElement.style.color = "white";
+    } else {
+      cardElement.innerHTML = `${card.value}${card.suit}`;
+      cardElement.style.color = (card.suit === '♥' || card.suit === '♦') ? 'red' : 'black';
+    }
+    dealerCardsElement.appendChild(cardElement);
+  });
+  
+  // Обновление очков
+  document.getElementById("playerScore").innerText = calculateScore(playerHand);
+  
+  if (blackjackGameEnded) {
+    document.getElementById("dealerScore").innerText = calculateScore(dealerHand);
+  } else {
+    document.getElementById("dealerScore").innerText = "?";
+  }
+  
+  // Проверка на блэкджек или перебор
+  const playerScore = calculateScore(playerHand);
+  if (playerScore === 21) {
+    endBlackjack("🎉 Блэкджек! Вы выиграли!");
+  } else if (playerScore > 21) {
+    endBlackjack("❌ Перебор! Вы проиграли.");
+  }
+}
+
+function hit() {
+  if (!blackjackGameActive) return;
+  
+  const deck = createDeck(); // Упрощение - каждый раз новая колода
+  playerHand.push(drawCard(deck));
+  updateBlackjackDisplay(deck);
+}
+
+function stand() {
+  if (!blackjackGameActive) return;
+  
+  blackjackGameEnded = true;
+  const deck = createDeck();
+  
+  // Дилер добирает карты до 17 очков
+  while (calculateScore(dealerHand) < 17) {
+    dealerHand.push(drawCard(deck));
+  }
+  
+  updateBlackjackDisplay(deck);
+  
+  const playerScore = calculateScore(playerHand);
+  const dealerScore = calculateScore(dealerHand);
+  
+  if (dealerScore > 21) {
+    endBlackjack("🎉 Дилер перебрал! Вы выиграли!");
+  } else if (dealerScore > playerScore) {
+    endBlackjack("❌ Дилер выиграл!");
+  } else if (dealerScore < playerScore) {
+    endBlackjack("🎉 Вы выиграли!");
+  } else {
+    endBlackjack("🤝 Ничья! Ставка возвращена.");
+    balance += blackjackBet; // Возвращаем ставку при ничье
+  }
+}
+
+function endBlackjack(message) {
+  document.getElementById("bjResult").innerText = message;
+  document.getElementById("startBtn").disabled = false;
+  document.getElementById("hitBtn").disabled = true;
+  document.getElementById("standBtn").disabled = true;
+  blackjackGameActive = false;
+  blackjackGameEnded = false;
+  updateBalances();
+}
+
+// Инициализация при загрузке
+initRoulette();
 </script>
 </body>
 </html>
