@@ -18,8 +18,6 @@
     .roulette-arrow{width:0;height:0;border-left:15px solid transparent;border-right:15px solid transparent;border-bottom:25px solid red;position:absolute;top:-30px;left:50%;transform:translateX(-50%);}
     .sector{position:absolute;width:50%;height:50%;transform-origin:100% 100%;display:flex;align-items:center;justify-content:center;font-size:10px;}
     .blackjack-hand{margin:10px 0;}
-    .dice-controls{margin:10px 0;}
-    .lobby{background:rgba(255,255,255,0.1);padding:10px;border-radius:8px;margin:5px 0;}
   </style>
 </head>
 <body>
@@ -30,7 +28,6 @@
       <div class="game" onclick="openModal('slots')">🎰 Слоты</div>
       <div class="game" onclick="openModal('roulette')">🎯 Рулетка</div>
       <div class="game" onclick="openModal('blackjack')">🃏 Блэкджек</div>
-      <div class="game" onclick="openModal('dice')">🎲 Dice (Онлайн)</div>
     </div>
   </div>
 
@@ -40,7 +37,7 @@
       <span class="close" onclick="closeModal('slots')">&times;</span>
       <h2>🎰 Слоты</h2>
       <p>Баланс: <span id="slotsBalance"></span></p>
-      <button onclick="playSlots()">Крутить (10💰)</button>
+      <button onclick="playSlots()">Крутить</button>
       <p id="slotsResult"></p>
     </div>
   </div>
@@ -55,7 +52,7 @@
         <div class="roulette-arrow"></div>
         <div id="wheel" class="roulette-wheel"></div>
       </div>
-      <button onclick="spinRoulette()">Крутить рулетку (50💰)</button>
+      <button onclick="spinRoulette()">Крутить рулетку</button>
       <p id="rouletteResult"></p>
     </div>
   </div>
@@ -68,497 +65,78 @@
       <p>Баланс: <span id="blackjackBalance"></span></p>
       <div id="bjPlayer" class="blackjack-hand"></div>
       <div id="bjDealer" class="blackjack-hand"></div>
-      <button id="hitBtn" onclick="hit()">Взять карту</button>
-      <button id="standBtn" onclick="stand()">Хватит</button>
-      <button id="newGameBtn" onclick="startBlackjack()" style="display:none;">Новая игра</button>
+      <button onclick="hit()">Взять карту</button>
+      <button onclick="stand()">Хватит</button>
       <p id="bjResult"></p>
     </div>
   </div>
 
-  <!-- Dice -->
-  <div id="dice" class="modal">
-    <div class="modal-content">
-      <span class="close" onclick="closeModal('dice')">&times;</span>
-      <h2>🎲 Dice (Онлайн)</h2>
-      <p>Баланс: <span id="diceBalance"></span></p>
-      
-      <div id="diceLobbySection">
-        <h3>Создать лобби</h3>
-        <div class="dice-controls">
-          <label>Количество игроков (2-5): </label>
-          <input type="number" id="maxPlayers" min="2" max="5" value="2">
-        </div>
-        <div class="dice-controls">
-          <label>Ставка: </label>
-          <input type="number" id="diceBet" min="10" max="1000" value="100">
-        </div>
-        <button onclick="createLobby()">Создать лобби</button>
-        
-        <h3>Присоединиться к лобби</h3>
-        <div id="availableLobbies"></div>
-      </div>
-      
-      <div id="diceGameSection" style="display:none;">
-        <h3>Игра Dice</h3>
-        <div id="lobbyInfo" class="lobby"></div>
-        <div id="playersList"></div>
-        <button id="rollDiceBtn" onclick="rollDice()">Бросить кубик</button>
-        <div id="diceResult"></div>
-      </div>
-    </div>
-  </div>
-
 <script>
-let balance = 1000;
-let gameBalance = 1000; // Баланс для текущей игры
-
+let balance=1000;
 function updateBalances(){
-  document.getElementById("balance").innerText = balance;
-  document.getElementById("slotsBalance").innerText = gameBalance;
-  document.getElementById("rouletteBalance").innerText = gameBalance;
-  document.getElementById("blackjackBalance").innerText = gameBalance;
-  document.getElementById("diceBalance").innerText = balance;
+  document.getElementById("balance").innerText=balance;
+  document.getElementById("slotsBalance").innerText=balance;
+  document.getElementById("rouletteBalance").innerText=balance;
+  document.getElementById("blackjackBalance").innerText=balance;
 }
 updateBalances();
 
-function openModal(id){
-  document.getElementById(id).style.display = "block";
-  gameBalance = balance; // Устанавливаем баланс для игры
-  updateBalances();
-  
-  if(id === 'blackjack') {
-    startBlackjack();
-  }
-  if(id === 'dice') {
-    loadLobbies();
-  }
-}
-
-function closeModal(id){
-  document.getElementById(id).style.display = "none";
-  balance = gameBalance; // Сохраняем изменения баланса
-  updateBalances();
-}
+function openModal(id){document.getElementById(id).style.display="block";updateBalances();}
+function closeModal(id){document.getElementById(id).style.display="none";}
 
 // Slots
 function playSlots(){
-  if(gameBalance < 10) {
-    document.getElementById("slotsResult").innerText = "❌ Недостаточно средств!";
-    return;
-  }
-  
-  const symbols = ["🍒","🍋","🔔","⭐","7️⃣"];
-  let result = [
-    symbols[Math.floor(Math.random()*symbols.length)],
-    symbols[Math.floor(Math.random()*symbols.length)],
-    symbols[Math.floor(Math.random()*symbols.length)]
-  ];
-  
-  document.getElementById("slotsResult").innerText = result.join(" ");
-  gameBalance -= 10;
-  
-  if(result[0] === result[1] && result[1] === result[2]){
-    gameBalance += 100;
-    document.getElementById("slotsResult").innerText += " 🎉 Выигрыш +100";
-  } else {
-    document.getElementById("slotsResult").innerText += " ❌ -10";
-  }
+  const symbols=["🍒","🍋","🔔","⭐","7️⃣"];
+  let result=[symbols[Math.floor(Math.random()*symbols.length)],symbols[Math.floor(Math.random()*symbols.length)],symbols[Math.floor(Math.random()*symbols.length)]];
+  document.getElementById("slotsResult").innerText=result.join(" ");
+  if(result[0]===result[1]&&result[1]===result[2]){balance+=100;document.getElementById("slotsResult").innerText+=" 🎉 Выигрыш +100";}
+  else{balance-=10;document.getElementById("slotsResult").innerText+=" ❌ -10";}
   updateBalances();
 }
 
 // Roulette
-const wheel = document.getElementById("wheel");
-let rouletteNumbers = [0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26];
-let anglePerSector = 360 / rouletteNumbers.length;
-
-// Создаем рулетку один раз при загрузке
-rouletteNumbers.forEach((num, i) => {
-  let sector = document.createElement("div");
-  sector.className = "sector";
-  sector.style.transform = `rotate(${i * anglePerSector}deg) skewY(${90 - anglePerSector}deg)`;
-  sector.innerText = num;
-  sector.style.background = (num === 0) ? "green" : (i % 2 === 0) ? "black" : "red";
-  sector.style.color = "white";
+const wheel=document.getElementById("wheel");
+let rouletteNumbers=[0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26];
+let anglePerSector=360/rouletteNumbers.length;
+rouletteNumbers.forEach((num,i)=>{
+  let sector=document.createElement("div");
+  sector.className="sector";
+  sector.style.transform=`rotate(${i*anglePerSector}deg) skewY(${90-anglePerSector}deg)`;
+  sector.innerText=num;
+  sector.style.background=(i%2==0)?"black":"red";
+  sector.style.color="white";
   wheel.appendChild(sector);
 });
 
 function spinRoulette(){
-  if(gameBalance < 50) {
-    document.getElementById("rouletteResult").innerText = "❌ Недостаточно средств!";
-    return;
-  }
-  
-  gameBalance -= 50;
-  updateBalances();
-  
-  let spins = 5 + Math.random() * 5;
-  let finalAngle = spins * 360;
-  wheel.style.transform = `rotate(${finalAngle}deg)`;
-  
-  setTimeout(() => {
-    let actualAngle = finalAngle % 360;
-    let index = Math.floor((rouletteNumbers.length - actualAngle / anglePerSector)) % rouletteNumbers.length;
-    let winNum = rouletteNumbers[index];
-    document.getElementById("rouletteResult").innerText = "Выпало число: " + winNum;
-    
-    if(winNum !== 0 && winNum % 2 === 0) {
-      gameBalance += 100;
-      document.getElementById("rouletteResult").innerText += " 🎉 Выигрыш +100";
-    } else {
-      document.getElementById("rouletteResult").innerText += " ❌ -50";
-    }
+  let spins=5+Math.random()*5;
+  let finalAngle=spins*360;
+  wheel.style.transform=`rotate(${finalAngle}deg)`;
+  setTimeout(()=>{
+    let actualAngle=finalAngle%360;
+    let index=Math.floor((rouletteNumbers.length - actualAngle/anglePerSector))%rouletteNumbers.length;
+    let winNum=rouletteNumbers[index];
+    document.getElementById("rouletteResult").innerText="Выпало число: "+winNum;
+    balance+=Math.random()>0.5?100:-50;
     updateBalances();
-  }, 4000);
+  },4000);
 }
 
 // Blackjack
-let bjDeck, player, dealer, gameOver = false;
-
-function newDeck(){
-  let d = [];
-  let cards = [2,3,4,5,6,7,8,9,10,10,10,10,11]; // 11 - туз
-  for(let i = 0; i < 4; i++){
-    d = d.concat(cards);
-  }
-  return d;
+let bjDeck,player,dealer,gameOver=false;
+function newDeck(){let d=[];let cards=[2,3,4,5,6,7,8,9,10,10,10,10,11];for(let i=0;i<4;i++){d=d.concat(cards);}return d;}
+function startBlackjack(){bjDeck=newDeck();player=[draw(),draw()];dealer=[draw(),draw()];gameOver=false;render();}
+function draw(){return bjDeck.splice(Math.floor(Math.random()*bjDeck.length),1)[0];}
+function sum(hand){return hand.reduce((a,b)=>a+b,0);}
+function render(){document.getElementById("bjPlayer").innerText="Твои карты: "+player.join(" ")+" ("+sum(player)+")";
+document.getElementById("bjDealer").innerText="Карты дилера: "+dealer[0]+" ?";
 }
-
-function startBlackjack(){
-  if(gameBalance < 50) {
-    document.getElementById("bjResult").innerText = "❌ Недостаточно средств! Минимальная ставка 50";
-    return;
-  }
-  
-  bjDeck = newDeck();
-  player = [draw(), draw()];
-  dealer = [draw(), draw()];
-  gameOver = false;
-  
-  document.getElementById("hitBtn").style.display = "inline-block";
-  document.getElementById("standBtn").style.display = "inline-block";
-  document.getElementById("newGameBtn").style.display = "none";
-  document.getElementById("bjResult").innerText = "";
-  
-  renderBlackjack();
-}
-
-function draw(){
-  return bjDeck.splice(Math.floor(Math.random() * bjDeck.length), 1)[0];
-}
-
-function sum(hand){
-  let total = hand.reduce((a, b) => a + b, 0);
-  // Обработка тузов
-  let aces = hand.filter(card => card === 11).length;
-  while(total > 21 && aces > 0) {
-    total -= 10;
-    aces--;
-  }
-  return total;
-}
-
-function renderBlackjack(){
-  document.getElementById("bjPlayer").innerText = "Твои карты: " + player.join(" ") + " (" + sum(player) + ")";
-  document.getElementById("bjDealer").innerText = "Карты дилера: " + dealer[0] + " ?";
-}
-
-function hit(){
-  if(gameOver) return;
-  
-  player.push(draw());
-  if(sum(player) > 21){
-    endBlackjack("❌ Перебор! Ты проиграл 50💰");
-    gameBalance -= 50;
-  }
-  renderBlackjack();
-}
-
-function stand(){
-  if(gameOver) return;
-  
-  while(sum(dealer) < 17) dealer.push(draw());
-  
-  let ps = sum(player);
-  let ds = sum(dealer);
-  let msg = "";
-  
-  if(ps > 21) {
-    msg = "❌ Перебор! Ты проиграл 50💰";
-    gameBalance -= 50;
-  } else if(ds > 21 || ps > ds) {
-    msg = "🎉 Победа! +100💰";
-    gameBalance += 100;
-  } else if(ps < ds) {
-    msg = "😢 Проигрыш -50💰";
-    gameBalance -= 50;
-  } else {
-    msg = "🤝 Ничья";
-  }
-  
-  endBlackjack(msg);
-}
-
-function endBlackjack(msg){
-  document.getElementById("bjDealer").innerText = "Карты дилера: " + dealer.join(" ") + " (" + sum(dealer) + ")";
-  document.getElementById("bjResult").innerText = msg;
-  gameOver = true;
-  
-  document.getElementById("hitBtn").style.display = "none";
-  document.getElementById("standBtn").style.display = "none";
-  document.getElementById("newGameBtn").style.display = "inline-block";
-  
-  updateBalances();
-}
-
-// Dice Online Game
-let lobbies = [];
-let currentLobby = null;
-let currentPlayerId = null;
-
-// Генерируем уникальный ID для игрока
-function generatePlayerId() {
-  return 'player_' + Math.random().toString(36).substr(2, 9);
-}
-
-// Создаем лобби
-function createLobby() {
-  const maxPlayers = parseInt(document.getElementById("maxPlayers").value);
-  const bet = parseInt(document.getElementById("diceBet").value);
-  
-  if(balance < bet) {
-    alert("Недостаточно средств для создания лобби!");
-    return;
-  }
-  
-  currentPlayerId = generatePlayerId();
-  const lobbyId = 'lobby_' + Math.random().toString(36).substr(2, 9);
-  
-  currentLobby = {
-    id: lobbyId,
-    creator: currentPlayerId,
-    maxPlayers: maxPlayers,
-    bet: bet,
-    players: [{
-      id: currentPlayerId,
-      name: "Игрок 1",
-      balance: balance,
-      roll: null
-    }],
-    currentTurn: 0,
-    status: 'waiting' // waiting, playing, finished
-  };
-  
-  lobbies.push(currentLobby);
-  balance -= bet; // Резервируем ставку
-  
-  showDiceGame();
-  updateLobbyInfo();
-}
-
-// Присоединиться к лобби
-function joinLobby(lobbyId) {
-  const lobby = lobbies.find(l => l.id === lobbyId);
-  if(!lobby) return;
-  
-  if(lobby.players.length >= lobby.maxPlayers) {
-    alert("Лобби заполнено!");
-    return;
-  }
-  
-  if(balance < lobby.bet) {
-    alert("Недостаточно средств для присоединения!");
-    return;
-  }
-  
-  currentPlayerId = generatePlayerId();
-  currentLobby = lobby;
-  
-  lobby.players.push({
-    id: currentPlayerId,
-    name: "Игрок " + (lobby.players.length + 1),
-    balance: balance,
-    roll: null
-  });
-  
-  balance -= lobby.bet; // Резервируем ставку
-  
-  // Если лобби заполнено, начинаем игру
-  if(lobby.players.length === lobby.maxPlayers) {
-    lobby.status = 'playing';
-    alert("Лобби заполнено! Начинаем игру.");
-  }
-  
-  showDiceGame();
-  updateLobbyInfo();
-}
-
-// Показать игровое поле Dice
-function showDiceGame() {
-  document.getElementById("diceLobbySection").style.display = "none";
-  document.getElementById("diceGameSection").style.display = "block";
-}
-
-// Обновить информацию о лобби
-function updateLobbyInfo() {
-  if(!currentLobby) return;
-  
-  const lobbyInfo = document.getElementById("lobbyInfo");
-  lobbyInfo.innerHTML = `
-    <strong>Лобби ID: ${currentLobby.id}</strong><br>
-    Игроков: ${currentLobby.players.length}/${currentLobby.maxPlayers}<br>
-    Ставка: ${currentLobby.bet}💰<br>
-    Статус: ${currentLobby.status === 'waiting' ? 'Ожидание игроков' : 'Игра идет'}
-  `;
-  
-  const playersList = document.getElementById("playersList");
-  playersList.innerHTML = "<h4>Игроки:</h4>";
-  
-  currentLobby.players.forEach((player, index) => {
-    const rollText = player.roll ? `Результат: ${player.roll}` : "Еще не бросил";
-    playersList.innerHTML += `
-      <div class="lobby">
-        ${player.name} ${player.id === currentPlayerId ? '(Вы)' : ''}<br>
-        ${rollText}
-      </div>
-    `;
-  });
-  
-  // Показываем кнопку броска только если ход текущего игрока
-  const currentPlayer = currentLobby.players.find(p => p.id === currentPlayerId);
-  const canRoll = currentLobby.status === 'playing' && 
-                 currentLobby.players[currentLobby.currentTurn].id === currentPlayerId &&
-                 !currentPlayer.roll;
-                 
-  document.getElementById("rollDiceBtn").style.display = canRoll ? "block" : "none";
-}
-
-// Бросить кубик
-function rollDice() {
-  if(!currentLobby || currentLobby.status !== 'playing') return;
-  
-  const currentPlayer = currentLobby.players.find(p => p.id === currentPlayerId);
-  if(!currentPlayer || currentPlayer.roll) return;
-  
-  // Бросаем кубик (от 1 до 6)
-  const roll = Math.floor(Math.random() * 6) + 1;
-  currentPlayer.roll = roll;
-  
-  // Передаем ход следующему игроку
-  currentLobby.currentTurn = (currentLobby.currentTurn + 1) % currentLobby.players.length;
-  
-  // Проверяем, все ли игроки бросили кубик
-  const allRolled = currentLobby.players.every(p => p.roll !== null);
-  
-  if(allRolled) {
-    // Определяем победителя
-    determineDiceWinner();
-  } else {
-    updateLobbyInfo();
-    document.getElementById("diceResult").innerHTML = `Вы бросили: ${roll}`;
-  }
-}
-
-// Определить победителя в Dice
-function determineDiceWinner() {
-  let maxRoll = 0;
-  let winners = [];
-  
-  currentLobby.players.forEach(player => {
-    if(player.roll > maxRoll) {
-      maxRoll = player.roll;
-      winners = [player];
-    } else if(player.roll === maxRoll) {
-      winners.push(player);
-    }
-  });
-  
-  // Распределяем выигрыш
-  const totalPot = currentLobby.bet * currentLobby.players.length;
-  const winPerPlayer = Math.floor(totalPot / winners.length);
-  
-  winners.forEach(winner => {
-    if(winner.id === currentPlayerId) {
-      balance += winPerPlayer;
-      alert(`🎉 Поздравляем! Вы выиграли ${winPerPlayer}💰`);
-    }
-  });
-  
-  // Обновляем баланс
-  updateBalances();
-  
-  // Показываем результаты
-  let resultHTML = "<h4>Результаты:</h4>";
-  currentLobby.players.forEach(player => {
-    const isWinner = winners.some(w => w.id === player.id);
-    resultHTML += `${player.name}: ${player.roll} ${isWinner ? '🎉 ПОБЕДА!' : ''}<br>`;
-  });
-  
-  resultHTML += `<br>Победитель(и) получают по ${winPerPlayer}💰`;
-  document.getElementById("diceResult").innerHTML = resultHTML;
-  
-  // Предлагаем сыграть снова
-  setTimeout(() => {
-    if(confirm("Хотите сыграть еще раз?")) {
-      resetDiceGame();
-    }
-  }, 2000);
-}
-
-// Сброс игры Dice для нового раунда
-function resetDiceGame() {
-  if(!currentLobby) return;
-  
-  // Сбрасываем броски игроков
-  currentLobby.players.forEach(player => {
-    player.roll = null;
-  });
-  
-  currentLobby.currentTurn = 0;
-  currentLobby.status = 'playing';
-  
-  updateLobbyInfo();
-  document.getElementById("diceResult").innerHTML = "";
-}
-
-// Загрузить доступные лобби
-function loadLobbies() {
-  const availableLobbies = document.getElementById("availableLobbies");
-  availableLobbies.innerHTML = "";
-  
-  const waitingLobbies = lobbies.filter(lobby => lobby.status === 'waiting');
-  
-  if(waitingLobbies.length === 0) {
-    availableLobbies.innerHTML = "<p>Нет доступных лобби</p>";
-    return;
-  }
-  
-  waitingLobbies.forEach(lobby => {
-    availableLobbies.innerHTML += `
-      <div class="lobby">
-        <strong>Лобби ${lobby.id}</strong><br>
-        Игроков: ${lobby.players.length}/${lobby.maxPlayers}<br>
-        Ставка: ${lobby.bet}💰<br>
-        <button onclick="joinLobby('${lobby.id}')">Присоединиться</button>
-      </div>
-    `;
-  });
-}
-
-// Инициализация игры при загрузке
-window.onload = function() {
-  updateBalances();
-  
-  // Инициализируем рулетку
-  rouletteNumbers.forEach((num, i) => {
-    let sector = document.createElement("div");
-    sector.className = "sector";
-    sector.style.transform = `rotate(${i * anglePerSector}deg) skewY(${90 - anglePerSector}deg)`;
-    sector.innerText = num;
-    sector.style.background = (num === 0) ? "green" : (i % 2 === 0) ? "black" : "red";
-    sector.style.color = "white";
-    wheel.appendChild(sector);
-  });
-};
+function hit(){if(gameOver)return;player.push(draw());if(sum(player)>21){end("❌ Перебор!");}render();}
+function stand(){if(gameOver)return;while(sum(dealer)<17)dealer.push(draw());let ps=sum(player),ds=sum(dealer);let msg="";
+if(ds>21||ps>ds){msg="🎉 Победа! +100";balance+=100;}else if(ps<ds){msg="😢 Проигрыш -50";balance-=50;}else{msg="🤝 Ничья";}
+end(msg);}
+function end(msg){document.getElementById("bjDealer").innerText="Карты дилера: "+dealer.join(" ")+" ("+sum(dealer)+")";document.getElementById("bjResult").innerText=msg;gameOver=true;updateBalances();}
+document.getElementById("blackjack").addEventListener("click",()=>{if(!gameOver)startBlackjack();});
 </script>
 </body>
 </html>
