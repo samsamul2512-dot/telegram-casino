@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telegram Casino Mini App</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        .game-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 10px 0;
+            color: white;
+            font-size: 18px;
+            width: 100%;
+            cursor: pointer;
+        }
+        .balance {
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎰 Казино Mini App</h1>
+        
+        <div class="balance">
+            <h2>💰 Баланс: <span id="balance">1000</span> монет</h2>
+        </div>
+        
+        <button class="game-btn" onclick="playSlots()">🎰 Игровые автоматы</button>
+        <button class="game-btn" onclick="playRoulette()">🎡 Рулетка</button>
+        <button class="game-btn" onclick="playBlackjack()">♠️ Блэкджек</button>
+        <button class="game-btn" onclick="playGuess()">🔢 Угадай число</button>
+        
+        <div id="result" style="margin-top: 20px; padding: 15px; background: rgba(255,255,255,0.1); border-radius: 10px;"></div>
+    </div>
+
+    <script>
+        let balance = 1000;
+        
+        function playSlots() {
+            const bet = 10;
+            if (balance < bet) {
+                showResult("❌ Недостаточно средств!");
+                return;
+            }
+            
+            balance -= bet;
+            updateBalance();
+            
+            const symbols = ['🍒', '🍋', '🍊', '💎'];
+            const result = [
+                symbols[Math.floor(Math.random() * symbols.length)],
+                symbols[Math.floor(Math.random() * symbols.length)],
+                symbols[Math.floor(Math.random() * symbols.length)]
+            ];
+            
+            let winAmount = 0;
+            if (result[0] === result[1] && result[1] === result[2]) {
+                winAmount = bet * 10;
+                showResult(`🎰 ${result[0]} ${result[1]} ${result[2]}<br>🎉 ДЖЕКПОТ! Выигрыш: ${winAmount} монет!`);
+            } else if (result[0] === result[1] || result[1] === result[2]) {
+                winAmount = bet * 3;
+                showResult(`🎰 ${result[0]} ${result[1]} ${result[2]}<br>👍 Выигрыш: ${winAmount} монет!`);
+            } else {
+                showResult(`🎰 ${result[0]} ${result[1]} ${result[2]}<br>💸 Проигрыш: ${bet} монет`);
+            }
+            
+            if (winAmount > 0) {
+                balance += winAmount;
+                updateBalance();
+            }
+        }
+        
+        function playRoulette() {
+            showResult("🎡 Рулетка скоро будет доступна!");
+        }
+        
+        function playBlackjack() {
+            showResult("♠️ Блэкджек скоро будет доступен!");
+        }
+        
+        function playGuess() {
+            showResult("🔢 Угадай число скоро будет доступно!");
+        }
+        
+        function showResult(text) {
+            document.getElementById('result').innerHTML = text;
+        }
+        
+        function updateBalance() {
+            document.getElementById('balance').textContent = balance;
+        }
+    </script>
+</body>
+</html>
