@@ -3,202 +3,311 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Premium Casino App</title>
+    <title>Elite Casino</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap');
+
         :root {
-            --bg-color: #05070a;
-            --card-bg: rgba(255, 255, 255, 0.03);
-            --accent-gold: #fbbf24;
-            --accent-blue: #3b82f6;
-            --neon-pink: #ff007f;
-            --text-main: #ffffff;
-            --text-dim: #94a3b8;
+            --bg-dark: #0f1014;
+            --bg-card: rgba(30, 32, 40, 0.7);
+            --gold-primary: #ffd700;
+            --gold-gradient: linear-gradient(135deg, #ffd700 0%, #d4af37 100%);
+            --red-glow: #ff4444;
+            --text-white: #ffffff;
+            --text-gray: #8b9bb4;
+            --glass-border: 1px solid rgba(255, 255, 255, 0.08);
         }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
         body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            font-family: 'Inter', -apple-system, sans-serif;
             margin: 0;
-            padding: 16px;
+            padding: 0;
+            background-color: var(--bg-dark);
+            background-image: radial-gradient(circle at 50% 0%, #1f2330 0%, #0f1014 70%);
+            font-family: 'Montserrat', sans-serif;
+            color: var(--text-white);
+            height: 100vh;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            overflow-x: hidden;
+            overflow: hidden; /* Запрет скролла всей страницы */
         }
 
-        /* Header / Profile Section */
+        /* --- HEADER --- */
         .header {
-            width: 100%;
+            padding: 16px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 24px;
+            background: rgba(15, 16, 20, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: var(--glass-border);
+            z-index: 100;
         }
 
-        .user-info {
+        .user-profile {
             display: flex;
             align-items: center;
             gap: 10px;
-            background: var(--card-bg);
-            padding: 8px 16px;
-            border-radius: 20px;
-            border: 1px solid rgba(255,255,255,0.1);
         }
 
-        .balance-badge {
-            background: linear-gradient(135deg, #1e293b, #0f172a);
-            padding: 10px 20px;
-            border-radius: 15px;
-            border: 1px solid var(--accent-gold);
-            box-shadow: 0 0 15px rgba(251, 191, 36, 0.2);
-            text-align: center;
+        .avatar-placeholder {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(45deg, #3b82f6, #8b5cf6);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
         }
 
-        .balance-amount {
-            color: var(--accent-gold);
-            font-size: 1.2rem;
+        .balance-container {
+            text-align: right;
+        }
+
+        .balance-label {
+            font-size: 10px;
+            color: var(--text-gray);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .balance-value {
+            font-size: 18px;
             font-weight: 800;
+            color: var(--gold-primary);
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
         }
 
-        /* Roulette Visuals */
-        .game-area {
-            position: relative;
-            margin: 20px 0;
+        /* --- MAIN GAME AREA --- */
+        .game-stage {
+            flex: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
-        }
-
-        .wheel-container {
-            width: 300px;
-            height: 300px;
+            justify-content: center;
             position: relative;
-            background: radial-gradient(circle, #1e293b 0%, #05070a 100%);
-            border-radius: 50%;
-            border: 10px solid #111827;
-            box-shadow: 0 0 40px rgba(0,0,0,0.8), inset 0 0 20px rgba(255,255,255,0.05);
         }
 
-        .wheel-img {
+        /* CSS ROULETTE WHEEL (Векторное качество) */
+        .wheel-outer {
+            width: 280px;
+            height: 280px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #2a2d3a, #161820);
+            padding: 10px;
+            box-shadow: 
+                0 0 0 2px rgba(255, 215, 0, 0.1),
+                0 20px 50px rgba(0,0,0,0.5),
+                inset 0 0 20px rgba(0,0,0,0.8);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .wheel-spinner {
             width: 100%;
             height: 100%;
+            border-radius: 50%;
+            border: 4px solid #d4af37;
+            /* Сектора рулетки через градиент */
+            background: conic-gradient(
+                #e74c3c 0deg 18deg, #2c3e50 18deg 36deg,
+                #e74c3c 36deg 54deg, #2c3e50 54deg 72deg,
+                #e74c3c 72deg 90deg, #2c3e50 90deg 108deg,
+                #e74c3c 108deg 126deg, #2c3e50 126deg 144deg,
+                #e74c3c 144deg 162deg, #2c3e50 162deg 180deg,
+                #e74c3c 180deg 198deg, #2c3e50 198deg 216deg,
+                #e74c3c 216deg 234deg, #2c3e50 234deg 252deg,
+                #e74c3c 252deg 270deg, #2c3e50 270deg 288deg,
+                #27ae60 288deg 306deg, /* ZERO (Green) */
+                #2c3e50 306deg 324deg,
+                #e74c3c 324deg 342deg, #2c3e50 342deg 360deg
+            );
             transition: transform 5s cubic-bezier(0.1, 0, 0.1, 1);
+        }
+
+        .wheel-center {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: radial-gradient(circle, #ffd700, #b8860b);
+            border-radius: 50%;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+            z-index: 5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
         }
 
         .pointer {
             position: absolute;
             top: -15px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 40px;
             z-index: 10;
-            filter: drop-shadow(0 0 10px var(--neon-pink));
+            width: 0; 
+            height: 0; 
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 25px solid var(--gold-primary);
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
         }
 
-        .timer-display {
-            margin-top: 15px;
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--text-dim);
-            text-shadow: 0 0 10px rgba(255,255,255,0.1);
+        .timer-badge {
+            margin-top: 25px;
+            background: rgba(255, 68, 68, 0.15);
+            color: #ff4444;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: 800;
+            font-size: 14px;
+            border: 1px solid rgba(255, 68, 68, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .timer-dot {
+            width: 8px;
+            height: 8px;
+            background: #ff4444;
+            border-radius: 50%;
+            animation: blink 1s infinite;
         }
 
-        /* Betting Grid */
+        /* --- CONTROLS --- */
+        .controls-panel {
+            background: #161820;
+            border-top: var(--glass-border);
+            padding: 20px;
+            border-radius: 24px 24px 0 0;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.3);
+        }
+
         .bet-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(3, 1fr);
             gap: 12px;
-            width: 100%;
-            max-width: 400px;
-            margin-top: 20px;
+            margin-bottom: 20px;
         }
 
-        .bet-btn {
-            background: var(--card-bg);
-            border: 1px solid rgba(255,255,255,0.1);
+        .chip-btn {
+            background: var(--bg-card);
+            border: 1px solid rgba(255,255,255,0.05);
             color: white;
-            padding: 18px;
-            border-radius: 16px;
-            font-size: 1.1rem;
+            padding: 15px 0;
+            border-radius: 12px;
             font-weight: 600;
-            backdrop-filter: blur(5px);
+            font-family: 'Montserrat', sans-serif;
             transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
         }
 
-        .bet-btn:active {
+        .chip-btn:active {
             transform: scale(0.95);
-            border-color: var(--accent-blue);
-            background: rgba(59, 130, 246, 0.1);
+            background: rgba(255,255,255,0.1);
         }
 
-        .all-in {
-            grid-column: span 2;
-            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+        .chip-btn.gold {
+            background: linear-gradient(135deg, #b8860b20, #ffd70020);
+            border-color: #ffd70040;
+            color: #ffd700;
+        }
+
+        .action-btn {
+            width: 100%;
+            padding: 18px;
             border: none;
+            border-radius: 14px;
+            background: var(--gold-gradient);
+            color: #000;
+            font-weight: 800;
+            font-size: 16px;
             text-transform: uppercase;
             letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+            cursor: pointer;
+            transition: transform 0.1s;
         }
 
-        /* Bottom Nav */
-        .bottom-nav {
+        .action-btn:active {
+            transform: scale(0.98);
+            opacity: 0.9;
+        }
+
+        /* ANIMATIONS */
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+
+        /* TOAST NOTIFICATION */
+        .toast {
             position: fixed;
-            bottom: 20px;
-            width: calc(100% - 32px);
-            background: rgba(15, 23, 42, 0.8);
-            backdrop-filter: blur(15px);
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: rgba(46, 204, 113, 0.9);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 14px;
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 10px 20px rgba(46, 204, 113, 0.2);
             display: flex;
-            justify-content: space-around;
-            padding: 15px 0;
-            border-radius: 24px;
-            border: 1px solid rgba(255,255,255,0.05);
-        }
-
-        .nav-item {
-            color: var(--text-dim);
-            font-size: 0.75rem;
-            text-decoration: none;
-            display: flex;
-            flex-direction: column;
             align-items: center;
-            gap: 5px;
+            gap: 8px;
         }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+
     </style>
 </head>
 <body>
 
+    <div id="toast" class="toast">✅ Ставка принята!</div>
+
     <div class="header">
-        <div class="user-info">
-            <span style="font-size: 1.2rem;">👑</span>
-            <span id="username">Player</span>
+        <div class="user-profile">
+            <div class="avatar-placeholder" id="avatar">U</div>
+            <div style="display: flex; flex-direction: column;">
+                <span style="font-size: 12px; color: var(--text-gray);">Игрок</span>
+                <span style="font-weight: 600; font-size: 14px;" id="username">Guest</span>
+            </div>
         </div>
-        <div class="balance-badge">
-            <div style="font-size: 0.7rem; color: #94a3b8; text-transform: uppercase;">Баланс</div>
-            <div class="balance-amount"><span id="balance">1,250.00</span> ₽</div>
+        <div class="balance-container">
+            <div class="balance-label">Ваш баланс</div>
+            <div class="balance-value"><span id="balance">1,000</span> ₽</div>
         </div>
     </div>
 
-    <div class="game-area">
-        <img src="https://cdn-icons-png.flaticon.com/512/8146/8146003.png" class="pointer">
-        <div class="wheel-container">
-            <img id="wheel" src="https://i.postimg.cc/9M6YvN4y/roulette-wheel.png" class="wheel-img">
+    <div class="game-stage">
+        <div class="wheel-outer">
+            <div class="pointer"></div>
+            <div class="wheel-spinner" id="wheel"></div>
+            <div class="wheel-center">🎰</div>
         </div>
-        <div class="timer-display">00:<span id="seconds">45</span></div>
+
+        <div class="timer-badge">
+            <div class="timer-dot"></div>
+            <span id="timer">00:45</span>
+        </div>
     </div>
 
-    <div class="bet-grid">
-        <button class="bet-btn" onclick="bet(100)">100 ₽</button>
-        <button class="bet-btn" onclick="bet(500)">500 ₽</button>
-        <button class="bet-btn" onclick="bet(1000)">1000 ₽</button>
-        <button class="bet-btn all-in" onclick="bet('all')">Ва-банк</button>
-    </div>
-
-    <div class="bottom-nav">
-        <div class="nav-item">🎮<br>Игры</div>
-        <div class="nav-item">👤<br>Профиль</div>
-        <div class="nav-item">👥<br>Друзья</div>
+    <div class="controls-panel">
+        <div class="bet-grid">
+            <button class="chip-btn" onclick="addBet(50)">+50</button>
+            <button class="chip-btn" onclick="addBet(100)">+100</button>
+            <button class="chip-btn" onclick="addBet(500)">+500</button>
+            <button class="chip-btn gold" onclick="addBet('all')">ALL IN</button>
+            <button class="chip-btn" style="grid-column: span 2; border-color: #ff444450; color: #ff6b6b;" onclick="clearBet()">СБРОСИТЬ</button>
+        </div>
+        <button class="action-btn" onclick="placeBet()">ПОСТАВИТЬ <span id="current-bet">(0)</span></button>
     </div>
 
     <script>
@@ -206,35 +315,75 @@
         tg.expand();
         tg.enableClosingConfirmation();
 
-        // Устанавливаем имя из Телеграма
-        document.getElementById('username').innerText = tg.initDataUnsafe.user?.first_name || "Игрок";
-
-        function bet(amount) {
-            tg.HapticFeedback.impactOccurred('heavy');
-            // Эффект нажатия
-            console.log("Ставка:", amount);
-            // Отправка данных боту
-            // tg.sendData(JSON.stringify({type: "bet", val: amount}));
+        // Данные
+        const usernameEl = document.getElementById('username');
+        const avatarEl = document.getElementById('avatar');
+        
+        // Авто-заполнение из TG
+        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+            const user = tg.initDataUnsafe.user;
+            usernameEl.innerText = user.first_name;
+            avatarEl.innerText = user.first_name.charAt(0).toUpperCase();
         }
 
-        // Анимация таймера
-        let sec = 45;
-        setInterval(() => {
-            sec--;
-            if(sec < 0) {
-                sec = 59;
-                spinWheel();
+        // Логика Ставок (Визуальная)
+        let currentBetAmount = 0;
+        const currentBetLabel = document.getElementById('current-bet');
+
+        function addBet(amount) {
+            tg.HapticFeedback.impactOccurred('light');
+            if(amount === 'all') {
+                currentBetAmount = 1000; // Пример
+            } else {
+                currentBetAmount += amount;
             }
-            document.getElementById('seconds').innerText = sec < 10 ? '0'+sec : sec;
-        }, 1000);
+            updateButton();
+        }
+
+        function clearBet() {
+            tg.HapticFeedback.impactOccurred('medium');
+            currentBetAmount = 0;
+            updateButton();
+        }
+
+        function updateButton() {
+            currentBetLabel.innerText = `(${currentBetAmount})`;
+        }
+
+        function placeBet() {
+            if(currentBetAmount === 0) return;
+            
+            tg.HapticFeedback.notificationOccurred('success');
+            
+            // Показать уведомление
+            const toast = document.getElementById('toast');
+            toast.innerText = `✅ Ставка ${currentBetAmount}₽ принята!`;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+
+            // Сброс
+            currentBetAmount = 0;
+            updateButton();
+        }
+
+        // Демо-вращение рулетки каждые 45 секунд
+        setInterval(() => {
+            spinWheel();
+        }, 15000); // Для теста поставил 15 секунд
 
         function spinWheel() {
             const wheel = document.getElementById('wheel');
-            const randomRotation = Math.floor(Math.random() * 3600) + 720;
-            wheel.style.transform = `rotate(${randomRotation}deg)`;
+            // Случайный угол от 3 до 6 полных оборотов + случайный сектор
+            const randomDeg = Math.floor(Math.random() * 1080) + 1080; 
             
+            wheel.style.transform = `rotate(${randomDeg}deg)`;
+            
+            // После окончания вращения (5 сек) сбросить трансформ для следующего раза
             setTimeout(() => {
-                tg.HapticFeedback.notificationOccurred('success');
+                wheel.style.transition = 'none';
+                const actualDeg = randomDeg % 360;
+                wheel.style.transform = `rotate(${actualDeg}deg)`;
+                setTimeout(() => { wheel.style.transition = 'transform 5s cubic-bezier(0.1, 0, 0.1, 1)'; }, 50);
             }, 5000);
         }
     </script>
