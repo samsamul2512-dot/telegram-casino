@@ -3,114 +3,240 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Casino Mini App</title>
+    <title>Premium Casino App</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
+        :root {
+            --bg-color: #05070a;
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --accent-gold: #fbbf24;
+            --accent-blue: #3b82f6;
+            --neon-pink: #ff007f;
+            --text-main: #ffffff;
+            --text-dim: #94a3b8;
+        }
+
         body {
-            background: #0f172a;
-            color: white;
-            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Inter', -apple-system, sans-serif;
             margin: 0;
-            padding: 20px;
+            padding: 16px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            overflow: hidden;
+            min-height: 100vh;
+            overflow-x: hidden;
         }
+
+        /* Header / Profile Section */
         .header {
             width: 100%;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: rgba(255, 255, 255, 0.05);
-            padding: 15px;
-            border-radius: 15px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .balance { color: #fbbf24; font-weight: bold; font-size: 1.2rem; }
-        
-        .roulette-container {
-            margin: 40px 0;
-            position: relative;
-            width: 280px;
-            height: 280px;
-        }
-        .wheel {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            border: 8px solid #334155;
-            background: conic-gradient(#1e293b 0deg 18deg, #ef4444 18deg 36deg, #1e293b 36deg 54deg, #ef4444 54deg 72deg); /* Упрощенная рулетка */
-            transition: transform 4s cubic-bezier(0.1, 0, 0.1, 1);
-            box-shadow: 0 0 50px rgba(0,0,0,0.5);
-        }
-        .pointer {
-            position: absolute;
-            top: -10px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 30px;
-            z-index: 10;
+            margin-bottom: 24px;
         }
 
-        .bet-buttons {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
+        .user-info {
+            display: flex;
+            align-items: center;
             gap: 10px;
+            background: var(--card-bg);
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .balance-badge {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            padding: 10px 20px;
+            border-radius: 15px;
+            border: 1px solid var(--accent-gold);
+            box-shadow: 0 0 15px rgba(251, 191, 36, 0.2);
+            text-align: center;
+        }
+
+        .balance-amount {
+            color: var(--accent-gold);
+            font-size: 1.2rem;
+            font-weight: 800;
+        }
+
+        /* Roulette Visuals */
+        .game-area {
+            position: relative;
+            margin: 20px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .wheel-container {
+            width: 300px;
+            height: 300px;
+            position: relative;
+            background: radial-gradient(circle, #1e293b 0%, #05070a 100%);
+            border-radius: 50%;
+            border: 10px solid #111827;
+            box-shadow: 0 0 40px rgba(0,0,0,0.8), inset 0 0 20px rgba(255,255,255,0.05);
+        }
+
+        .wheel-img {
             width: 100%;
+            height: 100%;
+            transition: transform 5s cubic-bezier(0.1, 0, 0.1, 1);
         }
-        .btn {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+
+        .pointer {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            z-index: 10;
+            filter: drop-shadow(0 0 10px var(--neon-pink));
+        }
+
+        .timer-display {
+            margin-top: 15px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-dim);
+            text-shadow: 0 0 10px rgba(255,255,255,0.1);
+        }
+
+        /* Betting Grid */
+        .bet-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            width: 100%;
+            max-width: 400px;
+            margin-top: 20px;
+        }
+
+        .bet-btn {
+            background: var(--card-bg);
+            border: 1px solid rgba(255,255,255,0.1);
             color: white;
-            padding: 15px;
-            border-radius: 12px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.3s;
+            padding: 18px;
+            border-radius: 16px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            backdrop-filter: blur(5px);
+            transition: all 0.2s;
         }
-        .btn:active { transform: scale(0.95); background: #3b82f6; }
-        .btn-allin { background: linear-gradient(90deg, #3b82f6, #8b5cf6); border: none; grid-column: span 2; }
+
+        .bet-btn:active {
+            transform: scale(0.95);
+            border-color: var(--accent-blue);
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .all-in {
+            grid-column: span 2;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            border: none;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Bottom Nav */
+        .bottom-nav {
+            position: fixed;
+            bottom: 20px;
+            width: calc(100% - 32px);
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(15px);
+            display: flex;
+            justify-content: space-around;
+            padding: 15px 0;
+            border-radius: 24px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .nav-item {
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            text-decoration: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
     </style>
 </head>
 <body>
+
     <div class="header">
-        <span>👤 Игрок</span>
-        <div class="balance">💰 <span id="user-balance">1000</span></div>
+        <div class="user-info">
+            <span style="font-size: 1.2rem;">👑</span>
+            <span id="username">Player</span>
+        </div>
+        <div class="balance-badge">
+            <div style="font-size: 0.7rem; color: #94a3b8; text-transform: uppercase;">Баланс</div>
+            <div class="balance-amount"><span id="balance">1,250.00</span> ₽</div>
+        </div>
     </div>
 
-    <div class="roulette-container">
+    <div class="game-area">
         <img src="https://cdn-icons-png.flaticon.com/512/8146/8146003.png" class="pointer">
-        <div class="wheel" id="wheel"></div>
+        <div class="wheel-container">
+            <img id="wheel" src="https://i.postimg.cc/9M6YvN4y/roulette-wheel.png" class="wheel-img">
+        </div>
+        <div class="timer-display">00:<span id="seconds">45</span></div>
     </div>
 
-    <div style="margin-bottom: 20px; font-size: 0.9rem; color: #94a3b8;">До начала: <span id="timer">45</span> сек</div>
+    <div class="bet-grid">
+        <button class="bet-btn" onclick="bet(100)">100 ₽</button>
+        <button class="bet-btn" onclick="bet(500)">500 ₽</button>
+        <button class="bet-btn" onclick="bet(1000)">1000 ₽</button>
+        <button class="bet-btn all-in" onclick="bet('all')">Ва-банк</button>
+    </div>
 
-    <div class="bet-buttons">
-        <button class="btn" onclick="makeBet(10)">10</button>
-        <button class="btn" onclick="makeBet(50)">50</button>
-        <button class="btn" onclick="makeBet(100)">100</button>
-        <button class="btn btn-allin" onclick="makeBet('all')">ПОСТАВИТЬ ВСЁ</button>
+    <div class="bottom-nav">
+        <div class="nav-item">🎮<br>Игры</div>
+        <div class="nav-item">👤<br>Профиль</div>
+        <div class="nav-item">👥<br>Друзья</div>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
-        tg.ready();
+        tg.enableClosingConfirmation();
 
-        function makeBet(amount) {
-            tg.HapticFeedback.impactOccurred('medium');
-            // Здесь будет логика отправки ставки на твой сервер
-            alert("Ставка принята: " + amount);
+        // Устанавливаем имя из Телеграма
+        document.getElementById('username').innerText = tg.initDataUnsafe.user?.first_name || "Игрок";
+
+        function bet(amount) {
+            tg.HapticFeedback.impactOccurred('heavy');
+            // Эффект нажатия
+            console.log("Ставка:", amount);
+            // Отправка данных боту
+            // tg.sendData(JSON.stringify({type: "bet", val: amount}));
         }
 
-        // Демо-вращение
+        // Анимация таймера
+        let sec = 45;
         setInterval(() => {
+            sec--;
+            if(sec < 0) {
+                sec = 59;
+                spinWheel();
+            }
+            document.getElementById('seconds').innerText = sec < 10 ? '0'+sec : sec;
+        }, 1000);
+
+        function spinWheel() {
             const wheel = document.getElementById('wheel');
-            const randomDeg = Math.floor(Math.random() * 3600) + 360;
-            wheel.style.transform = `rotate(${randomDeg}deg)`;
-        }, 60000);
+            const randomRotation = Math.floor(Math.random() * 3600) + 720;
+            wheel.style.transform = `rotate(${randomRotation}deg)`;
+            
+            setTimeout(() => {
+                tg.HapticFeedback.notificationOccurred('success');
+            }, 5000);
+        }
     </script>
 </body>
 </html>
